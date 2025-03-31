@@ -141,7 +141,6 @@ if uploaded_file is not None:
             
             # Evaluate the model
             y_pred = trained_pipeline.predict(X_test)
-            from sklearn.metrics import accuracy_score, f1_score
             accuracy = accuracy_score(y_test, y_pred)
             f1 = f1_score(y_test, y_pred, average="macro")
             
