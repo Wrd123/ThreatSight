@@ -1,13 +1,17 @@
 # streamlit_app.py
-
 import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from io import StringIO
+import plotly.express as px
 
-# Importing modules from our modular files
+from datetime import datetime
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, f1_score
+
+# Importing modules 
 from ingestion_processing import DataIngestion, DataCleaning, DataProcessing
 from model_visualization import ModelTraining, Visualization
 
@@ -84,7 +88,9 @@ if uploaded_file is not None:
         sns.boxplot(x=df_clean["Anomaly Scores"], ax=ax_box)
         ax_box.axvline(threshold, color="red", linestyle="--", label="Threshold")
         ax_box.legend()
-        st.pyplot(fig_box)
+        col1, col2, col3 = st.columns([1, 4, 1])  # Creates margins on the sides
+        with col2:
+            st.pyplot(fig_box)
         
         # Histogram of Anomaly Scores
         st.subheader("Histogram of Anomaly Scores")
@@ -92,7 +98,22 @@ if uploaded_file is not None:
         sns.histplot(df_clean["Anomaly Scores"], bins=20, kde=True, ax=ax_hist)
         ax_hist.axvline(threshold, color="red", linestyle="--", label="Threshold")
         ax_hist.legend()
-        st.pyplot(fig_hist)
+        col1, col2, col3 = st.columns([1, 4, 1])  # Creates margins on the sides
+        with col2:
+            st.pyplot(fig_hist)
+
+         # --- Add Interactive Scatter Plot ---
+        if "Packet Length" in df_clean.columns:
+            st.subheader("Interactive Scatter Plot: Packet Length vs. Anomaly Scores")
+            scatter_fig = px.scatter(
+                df_clean,
+                x="Packet Length",
+                y="Anomaly Scores",
+                color="Above Threshold",
+                hover_data=df_clean.columns,
+                title="Packet Length vs. Anomaly Scores"
+            )
+            st.plotly_chart(scatter_fig)
         
         # List high anomaly events
         st.subheader("High Anomaly Events (Above Threshold)")
@@ -116,27 +137,37 @@ if uploaded_file is not None:
     st.header("Model Interaction and Feedback")
     if "Severity Level" in df_clean.columns:
         # Allow hyperparameter tuning
+       # Hyperparameter slider for tuning
         n_estimators = st.slider("Number of trees in RandomForest", min_value=50, max_value=200, value=100, step=10)
-        if st.button("Retrain Model"):
+
+        # Retrain Model block
+        if st.button("Retrain Model", key="retrain_button"):
+            # Debug: Output timestamp to confirm retraining execution
+            st.write("Retraining triggered at:", datetime.now())
+            
             # Define features and target for model training
-            # Using 'Severity Level' as target; features include the defined categorical and numerical features.
-            features_for_model = categorical_features + (["Packet Length", "Anomaly Scores"] if "Anomaly Scores" in df_clean.columns else ["Packet Length"])
+            if "Anomaly Scores" in df_clean.columns and pd.api.types.is_numeric_dtype(df_clean["Anomaly Scores"]):
+                features_for_model = categorical_features + ["Packet Length", "Anomaly Scores"]
+            else:
+                features_for_model = categorical_features + ["Packet Length"]
             X = df_clean[features_for_model]
             y = df_clean["Severity Level"]
             
-            # Build processing pipeline (again) for model training
+            # Create a new processing pipeline instance to ensure no cached objects are used
             processing_model = DataProcessing(categorical_features, (["Packet Length", "Anomaly Scores"] if "Anomaly Scores" in df_clean.columns else ["Packet Length"]))
             preprocessor_model = processing_model.build_preprocessor()
             
             # Initialize the ModelTraining module with 'classification'
             model_training = ModelTraining(model_type="classification")
-            # Build pipeline; adjust the model hyperparameter for n_estimators
+            # Build pipeline
             pipeline_model = model_training.build_pipeline(preprocessor_model)
-            pipeline_model["model"].n_estimators = n_estimators  # update hyperparameter
+            # Update hyperparameter based on slider value
+            pipeline_model.named_steps["model"].n_estimators = n_estimators
             
-            # Split the data for training and testing
-            from sklearn.model_selection import train_test_split
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+            # Split the data for training and testing (removed fixed random_state for variability)
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+            
+            # Train the model
             trained_pipeline = model_training.train(X_train, y_train)
             
             # Evaluate the model
@@ -148,12 +179,16 @@ if uploaded_file is not None:
             st.write(f"**Model Accuracy:** {accuracy:.2f}")
             st.write(f"**Model F1 Score:** {f1:.2f}")
             
+            # Debug: Output a timestamp to confirm retraining completion
+            st.write("Retraining complete at:", datetime.now())
+            
             # Display feature importance if available
-            if hasattr(trained_pipeline["model"], "feature_importances_"):
-                importances = trained_pipeline["model"].feature_importances_
-                # Retrieve feature names using the preprocessor (for simplicity, create placeholder names)
+            model_step = trained_pipeline.named_steps.get("model")
+            if model_step is not None and hasattr(model_step, "feature_importances_"):
+                importances = model_step.feature_importances_
                 feature_names = [f"feature_{i}" for i in range(len(importances))]
                 st.subheader("Feature Importance")
-                Visualization.plot_feature_importance(feature_names, importances)
-    else:
-        st.info("Column 'Severity Level' not found in the dataset. Model training and evaluation skipped.")
+                fig = Visualization.plot_feature_importance(feature_names, importances)
+                st.pyplot(fig)
+            else:
+                st.info("Feature importances are not available for the current model.")

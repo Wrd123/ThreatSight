@@ -3,6 +3,8 @@ import seaborn as sns
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+import plotly.express as px
+
 
 # ---------------- Model Training Module ----------------
 class ModelTraining:
@@ -53,10 +55,22 @@ class Visualization:
         plt.show()
 
     @staticmethod
-    def plot_feature_importance(feature_names, importances) -> None:
-        plt.figure(figsize=(15, 5))
-        plt.barh(feature_names, importances)
-        plt.xlabel("Importance")
-        plt.ylabel("Features")
-        plt.title("Feature Importance")
-        plt.show()
+    def plot_scatter(df, x, y, color_column=None, title="Scatter Plot"):
+        fig = px.scatter(
+            df,
+            x=x,
+            y=y,
+            color=color_column,
+            hover_data=df.columns,
+            title=title
+        )
+        return fig
+
+    @staticmethod
+    def plot_feature_importance(feature_names, importances):
+        fig, ax = plt.subplots(figsize=(15, 5))
+        ax.barh(feature_names, importances)
+        ax.set_xlabel("Importance")
+        ax.set_ylabel("Features")
+        ax.set_title("Feature Importance")
+        return fig 
