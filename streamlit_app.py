@@ -1,19 +1,19 @@
 # streamlit_app.py
+
 import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from io import StringIO
 import plotly.express as px
 
 from datetime import datetime
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, f1_score
 
-# Importing modules 
+# Importing our custom modules
 from ingestion_processing import DataIngestion, DataCleaning, DataProcessing
-from model_visualization import ModelTraining, Visualization
+from model_visualization import ModelTraining, Visualization, ModelEvaluation
 
 # Set Streamlit page configuration
 st.set_page_config(page_title="Cybersecurity Threat Detection Dashboard", layout="wide")
@@ -45,6 +45,7 @@ if uploaded_file is not None:
     # Data Cleaning
     cleaning = DataCleaning(drop_columns)
     df_clean = cleaning.clean_data(df)
+    #st.write("Columns in the cleaned data:", df_clean.columns)
     
     # Data Preview with filtering options
     st.subheader("Data Preview")
@@ -102,7 +103,7 @@ if uploaded_file is not None:
         with col2:
             st.pyplot(fig_hist)
 
-         # --- Add Interactive Scatter Plot ---
+        # --- Add Interactive Scatter Plot ---
         if "Packet Length" in df_clean.columns:
             st.subheader("Interactive Scatter Plot: Packet Length vs. Anomaly Scores")
             scatter_fig = px.scatter(
@@ -132,12 +133,11 @@ if uploaded_file is not None:
         st.info("Column 'Anomaly Scores' not found in the dataset. Skipping visualization.")
 
     # ========================================
-    # Section 3: Model Interaction and Feedback
+    # Section 2: Model Interaction and Feedback
     # ========================================
     st.header("Model Interaction and Feedback")
     if "Severity Level" in df_clean.columns:
-        # Allow hyperparameter tuning
-       # Hyperparameter slider for tuning
+        # Hyperparameter tuning: slider for number of trees
         n_estimators = st.slider("Number of trees in RandomForest", min_value=50, max_value=200, value=100, step=10)
 
         # Retrain Model block
@@ -153,28 +153,31 @@ if uploaded_file is not None:
             y = df_clean["Severity Level"]
             
             # Create a new processing pipeline instance to ensure no cached objects are used
-            processing_model = DataProcessing(categorical_features, (["Packet Length", "Anomaly Scores"] if "Anomaly Scores" in df_clean.columns else ["Packet Length"]))
+            processing_model = DataProcessing(
+                categorical_features, 
+                (["Packet Length", "Anomaly Scores"] if "Anomaly Scores" in df_clean.columns else ["Packet Length"])
+            )
             preprocessor_model = processing_model.build_preprocessor()
             
-            # Initialize the ModelTraining module with 'classification'
+            # Initialize the ModelTraining module with classification
             model_training = ModelTraining(model_type="classification")
             pipeline_model = model_training.build_pipeline(preprocessor_model)
             # Update hyperparameter based on slider value
             pipeline_model.named_steps["model"].n_estimators = n_estimators
             
-            # Split the data for training and testing (removed fixed random_state for variability)
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+            # Split the data for training and testing
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
             
             # Train the model
             trained_pipeline = model_training.train(X_train, y_train)
             
-            # Evaluate the model
+            # Evaluate the model on test data
             y_pred = trained_pipeline.predict(X_test)
-            accuracy = accuracy_score(y_test, y_pred)
+            acc = accuracy_score(y_test, y_pred)
             f1 = f1_score(y_test, y_pred, average="macro")
             
             st.success("Model retrained successfully!")
-            st.write(f"**Model Accuracy:** {accuracy:.2f}")
+            st.write(f"**Model Accuracy:** {acc:.2f}")
             st.write(f"**Model F1 Score:** {f1:.2f}")
             st.write("Retraining complete at:", datetime.now())
             
@@ -182,9 +185,32 @@ if uploaded_file is not None:
             model_step = trained_pipeline.named_steps.get("model")
             if model_step is not None and hasattr(model_step, "feature_importances_"):
                 importances = model_step.feature_importances_
-                feature_names = [f"feature_{i}" for i in range(len(importances))]
+                # Retrieve and clean feature names from the preprocessor using ModelEvaluation utility
+                feature_names = ModelEvaluation.get_clean_feature_names(preprocessor_model)
                 st.subheader("Feature Importance")
-                fig = Visualization.plot_feature_importance(feature_names, importances)
-                st.pyplot(fig)
+                fig_feat = Visualization.plot_feature_importance(feature_names, importances)
+                st.pyplot(fig_feat)
             else:
                 st.info("Feature importances are not available for the current model.")
+            
+            # ===========================
+            # Evaluation Section
+            # ===========================
+            st.subheader("Model Evaluation")
+            
+            # Cross-Validation Evaluation for Classification
+            cv_results = ModelEvaluation.evaluate_classification(trained_pipeline, X_train, y_train)
+            st.write("Cross-Validation Results:")
+            st.write(cv_results)
+            
+            # Plot Confusion Matrix
+            st.subheader("Confusion Matrix")
+            fig_cm = ModelEvaluation.plot_confusion_matrix(y_test, y_pred, class_labels=['Low', 'Medium', 'High'])
+            col1, col2, col3 = st.columns([1, 4, 1])
+            with col2:
+                st.pyplot(fig_cm)
+            
+            # Generate and Display Classification Report
+            st.subheader("Classification Report")
+            report_df = ModelEvaluation.generate_classification_report(y_test, y_pred, output_csv="test_res.csv")
+            st.dataframe(report_df)
