@@ -142,7 +142,6 @@ if uploaded_file is not None:
 
         # Retrain Model block
         if st.button("Retrain Model", key="retrain_button"):
-            # Debug: Output timestamp to confirm retraining execution
             st.write("Retraining triggered at:", datetime.now())
             
             # Define features and target for model training
@@ -159,7 +158,6 @@ if uploaded_file is not None:
             
             # Initialize the ModelTraining module with 'classification'
             model_training = ModelTraining(model_type="classification")
-            # Build pipeline
             pipeline_model = model_training.build_pipeline(preprocessor_model)
             # Update hyperparameter based on slider value
             pipeline_model.named_steps["model"].n_estimators = n_estimators
@@ -178,8 +176,6 @@ if uploaded_file is not None:
             st.success("Model retrained successfully!")
             st.write(f"**Model Accuracy:** {accuracy:.2f}")
             st.write(f"**Model F1 Score:** {f1:.2f}")
-            
-            # Debug: Output a timestamp to confirm retraining completion
             st.write("Retraining complete at:", datetime.now())
             
             # Display feature importance if available
