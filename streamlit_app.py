@@ -83,38 +83,43 @@ if uploaded_file is not None:
         # Create a flag column based on the threshold
         df_clean["Above Threshold"] = df_clean["Anomaly Scores"] > threshold
         
-        # Box Plot of Anomaly Scores
-        st.subheader("Box Plot of Anomaly Scores")
-        fig_box, ax_box = plt.subplots(figsize=(8, 6))
-        sns.boxplot(x=df_clean["Anomaly Scores"], ax=ax_box)
-        ax_box.axvline(threshold, color="red", linestyle="--", label="Threshold")
-        ax_box.legend()
-        col1, col2, col3 = st.columns([1, 4, 1])  # Creates margins on the sides
-        with col2:
+       # Replace the current visualization code with a dashboard layout
+        st.subheader("Anomaly Scores Dashboard")
+        col1, col2 = st.columns(2)
+        with col1:
+            # Box Plot of Anomaly Scores
+            fig_box, ax_box = plt.subplots(figsize=(6, 4))
+            sns.boxplot(x=df_clean["Anomaly Scores"], ax=ax_box)
+            ax_box.axvline(threshold, color="red", linestyle="--", label="Threshold")
+            ax_box.legend()
             st.pyplot(fig_box)
-        
-        # Histogram of Anomaly Scores
-        st.subheader("Histogram of Anomaly Scores")
-        fig_hist, ax_hist = plt.subplots(figsize=(8, 6))
-        sns.histplot(df_clean["Anomaly Scores"], bins=20, kde=True, ax=ax_hist)
-        ax_hist.axvline(threshold, color="red", linestyle="--", label="Threshold")
-        ax_hist.legend()
-        col1, col2, col3 = st.columns([1, 4, 1])  # Creates margins on the sides
+            
+            # Distribution by Category
+            if "Attack Type" in df_clean.columns:
+                st.subheader("Attack Type Distribution")
+                attack_counts = df_clean["Attack Type"].value_counts()
+                fig_bar = px.bar(x=attack_counts.index, y=attack_counts.values, 
+                                labels={'x': 'Attack Type', 'y': 'Count'})
+                st.plotly_chart(fig_bar)
         with col2:
+            # Histogram of Anomaly Scores
+            fig_hist, ax_hist = plt.subplots(figsize=(6, 4))
+            sns.histplot(df_clean["Anomaly Scores"], bins=20, kde=True, ax=ax_hist)
+            ax_hist.axvline(threshold, color="red", linestyle="--", label="Threshold")
+            ax_hist.legend()
             st.pyplot(fig_hist)
-
-        # --- Add Interactive Scatter Plot ---
-        if "Packet Length" in df_clean.columns:
-            st.subheader("Interactive Scatter Plot: Packet Length vs. Anomaly Scores")
-            scatter_fig = px.scatter(
-                df_clean,
-                x="Packet Length",
-                y="Anomaly Scores",
-                color="Above Threshold",
-                hover_data=df_clean.columns,
-                title="Packet Length vs. Anomaly Scores"
-            )
-            st.plotly_chart(scatter_fig)
+            
+            # Interactive Scatter Plot
+            if "Packet Length" in df_clean.columns:
+                st.subheader("Packet Length vs. Anomaly Scores")
+                scatter_fig = px.scatter(
+                    df_clean,
+                    x="Packet Length",
+                    y="Anomaly Scores",
+                    color="Above Threshold",
+                    hover_data=df_clean.columns,
+                )
+                st.plotly_chart(scatter_fig)
         
         # List high anomaly events
         st.subheader("High Anomaly Events (Above Threshold)")
@@ -139,12 +144,31 @@ if uploaded_file is not None:
     if "Severity Level" in df_clean.columns:
         # Hyperparameter tuning: sliders for model parameters
         st.subheader("Hyperparameter Tuning")
-        n_estimators = st.slider("Number of trees in RandomForest", min_value=50, max_value=500, value=100, step=10)
-        max_depth = st.slider("Maximum depth of trees", min_value=5, max_value=30, value=10, step=1)
-        min_samples_split = st.slider("Minimum samples required to split", min_value=2, max_value=20, value=2, step=1)
-        min_samples_leaf = st.slider("Minimum samples required in leaf", min_value=1, max_value=20, value=1, step=1)
+            # Add explanation and slider for n_estimators
+        st.markdown("**Number of trees in RandomForest**")
+        st.markdown("*Controls the number of decision trees in the ensemble. More trees generally improve performance but increase computation time. Higher values reduce variance but may lead to overfitting.*")
+        n_estimators = st.slider("-", min_value=50, max_value=500, value=100, step=10)
+        
+        # Add explanation and slider for max_depth
+        st.markdown("**Maximum depth of trees**")
+        st.markdown("*Defines how deep each decision tree can grow. Deeper trees can model more complex patterns but are more prone to overfitting. Shallower trees are more generalizable.*")
+        max_depth = st.slider("-", min_value=5, max_value=30, value=10, step=1)
+        
+        # Add explanation and slider for min_samples_split
+        st.markdown("**Minimum samples required to split**")
+        st.markdown("*The minimum number of samples required to split an internal node. Higher values prevent creating nodes that might only capture noise in the training data.*")
+        min_samples_split = st.slider("-", min_value=2, max_value=20, value=2, step=1)
+        
+        # Add explanation and slider for min_samples_leaf
+        st.markdown("**Minimum samples required in leaf**")
+        st.markdown("*The minimum number of samples required to be at a leaf node. Higher values create more conservative trees that are less likely to overfit.*")
+        min_samples_leaf = st.slider("-", min_value=1, max_value=20, value=1, step=1)
+        
+        # Add explanation and dropdown for max_features
+        st.markdown("**Maximum features to consider when splitting**")
+        st.markdown("*The number of features to consider when looking for the best split. 'sqrt' uses square root of total features, 'log2' uses log base 2, and None uses all features. Controls the randomness in feature selection.*")
         max_features_options = ['sqrt', 'log2', None]
-        max_features = st.selectbox("Maximum features to consider when splitting", options=max_features_options, index=0)
+        max_features = st.selectbox("-", options=max_features_options, index=0)
 
         # Define initial feature sets before selection
         if "Anomaly Scores" in df_clean.columns and pd.api.types.is_numeric_dtype(df_clean["Anomaly Scores"]):
