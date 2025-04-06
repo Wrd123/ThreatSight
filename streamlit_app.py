@@ -62,7 +62,7 @@ if uploaded_file is not None:
     categorical_features = [
         "Protocol", "Packet Type", "Traffic Type", "Malware Indicators",
         "Attack Type", "Attack Signature", "Action Taken", "Network Segment",
-        "Alerts/Warnings", "Severity Level"
+        "Alerts/Warnings"
     ]
     numerical_features = ["Packet Length"]
     
@@ -133,37 +133,83 @@ if uploaded_file is not None:
         st.info("Column 'Anomaly Scores' not found in the dataset. Skipping visualization.")
 
     # ========================================
-    # Section 2: Model Interaction and Feedback
+    # Section 3: Model Interaction and Feedback
     # ========================================
     st.header("Model Interaction and Feedback")
     if "Severity Level" in df_clean.columns:
-        # Hyperparameter tuning: slider for number of trees
-        n_estimators = st.slider("Number of trees in RandomForest", min_value=50, max_value=200, value=100, step=10)
+        # Hyperparameter tuning: sliders for model parameters
+        st.subheader("Hyperparameter Tuning")
+        n_estimators = st.slider("Number of trees in RandomForest", min_value=50, max_value=500, value=100, step=10)
+        max_depth = st.slider("Maximum depth of trees", min_value=5, max_value=30, value=10, step=1)
+        min_samples_split = st.slider("Minimum samples required to split", min_value=2, max_value=20, value=2, step=1)
+        min_samples_leaf = st.slider("Minimum samples required in leaf", min_value=1, max_value=20, value=1, step=1)
+        max_features_options = ['sqrt', 'log2', None]
+        max_features = st.selectbox("Maximum features to consider when splitting", options=max_features_options, index=0)
+
+        # Define initial feature sets before selection
+        if "Anomaly Scores" in df_clean.columns and pd.api.types.is_numeric_dtype(df_clean["Anomaly Scores"]):
+            available_features = categorical_features + ["Packet Length", "Anomaly Scores"]
+        else:
+            available_features = categorical_features + ["Packet Length"]
+
+        # Feature selection options
+        st.subheader("Feature Selection")
+        feature_selection_method = st.radio(
+            "Feature selection method", 
+            options=["Use all features", "Manual selection"]
+        )
+        
+        # Initialize selected features to all available features
+        selected_features = available_features
+        
+        # If manual selection, show multiselect widget
+        if feature_selection_method == "Manual selection":
+            selected_features = st.multiselect(
+                "Select features to use", 
+                options=available_features,
+                default=available_features
+            )
+            
+            if len(selected_features) < 1:
+                st.warning("Please select at least one feature")
+                selected_features = available_features
 
         # Retrain Model block
         if st.button("Retrain Model", key="retrain_button"):
             st.write("Retraining triggered at:", datetime.now())
             
-            # Define features and target for model training
-            if "Anomaly Scores" in df_clean.columns and pd.api.types.is_numeric_dtype(df_clean["Anomaly Scores"]):
-                features_for_model = categorical_features + ["Packet Length", "Anomaly Scores"]
-            else:
-                features_for_model = categorical_features + ["Packet Length"]
+            # Use the selected features
+            features_for_model = selected_features
+            
+            # Debug: Print features to check for leakage
+            st.write("Features being used for model training:")
+            st.write(features_for_model)
+            st.write("Target variable:")
+            st.write("Severity Level")
+            
             X = df_clean[features_for_model]
             y = df_clean["Severity Level"]
             
-            # Create a new processing pipeline instance to ensure no cached objects are used
+            # Create a new processing pipeline instance
+            numerical_features_selected = [f for f in numerical_features if f in features_for_model]
+            categorical_features_selected = [f for f in categorical_features if f in features_for_model]
+            
             processing_model = DataProcessing(
-                categorical_features, 
-                (["Packet Length", "Anomaly Scores"] if "Anomaly Scores" in df_clean.columns else ["Packet Length"])
+                categorical_features_selected, 
+                numerical_features_selected
             )
             preprocessor_model = processing_model.build_preprocessor()
             
             # Initialize the ModelTraining module with classification
             model_training = ModelTraining(model_type="classification")
             pipeline_model = model_training.build_pipeline(preprocessor_model)
-            # Update hyperparameter based on slider value
+            
+            # Update all hyperparameters based on slider values
             pipeline_model.named_steps["model"].n_estimators = n_estimators
+            pipeline_model.named_steps["model"].max_depth = max_depth
+            pipeline_model.named_steps["model"].min_samples_split = min_samples_split
+            pipeline_model.named_steps["model"].min_samples_leaf = min_samples_leaf
+            pipeline_model.named_steps["model"].max_features = max_features
             
             # Split the data for training and testing
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
