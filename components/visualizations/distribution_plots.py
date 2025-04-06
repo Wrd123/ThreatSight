@@ -1,7 +1,4 @@
 # components/visualizations/distribution_plots.py
-"""
-Functions for creating various distribution plots (scatter, density, violin).
-"""
 
 import streamlit as st
 import pandas as pd
@@ -10,17 +7,7 @@ import plotly.express as px
 from .utils import apply_dark_theme, add_threshold_line
 
 def create_scatter_plot(df_clean, threshold, color_by="Above Threshold"):
-    """
-    Create a scatter plot of Packet Length vs Anomaly Scores.
-    
-    Args:
-        df_clean (pd.DataFrame): The cleaned dataframe
-        threshold (float): The anomaly score threshold
-        color_by (str): Column to use for color coding points
-        
-    Returns:
-        fig: The plotly figure object
-    """
+
     # Add some jitter to y-values to show density better
     df_plot = df_clean.copy()
     
@@ -57,16 +44,7 @@ def create_scatter_plot(df_clean, threshold, color_by="Above Threshold"):
     return scatter_fig
 
 def create_density_heatmap(df_clean, threshold):
-    """
-    Create a density heatmap of Packet Length vs Anomaly Scores.
-    
-    Args:
-        df_clean (pd.DataFrame): The cleaned dataframe
-        threshold (float): The anomaly score threshold
-        
-    Returns:
-        fig: The plotly figure object
-    """
+ 
     # Create a 2D histogram/heatmap to show density
     heat_fig = px.density_heatmap(
         df_clean,
@@ -84,18 +62,7 @@ def create_density_heatmap(df_clean, threshold):
     return heat_fig
 
 def create_violin_plot(df_clean, threshold, group_by, color_by="Above Threshold"):
-    """
-    Create a violin plot of Anomaly Scores grouped by a categorical variable.
-    
-    Args:
-        df_clean (pd.DataFrame): The cleaned dataframe
-        threshold (float): The anomaly score threshold
-        group_by (str): Column to group by on x-axis
-        color_by (str): Column to use for color coding
-        
-    Returns:
-        fig: The plotly figure object or None if required data is not available
-    """
+ 
     if group_by not in df_clean.columns:
         return None
         
@@ -118,12 +85,7 @@ def create_violin_plot(df_clean, threshold, group_by, color_by="Above Threshold"
     return violin_fig
 
 def render_distribution_explanation(visualization_type):
-    """
-    Render an explanation for a specific type of distribution visualization.
-    
-    Args:
-        visualization_type (str): Type of visualization ('scatter', 'density', or 'violin')
-    """
+
     if visualization_type == "Scatter Plot":
         st.markdown("""
         **Understanding this scatter plot:**

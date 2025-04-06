@@ -1,7 +1,4 @@
 # components/visualizations/main.py
-"""
-Main entry point for visualization components.
-"""
 
 import streamlit as st
 import pandas as pd
@@ -17,13 +14,7 @@ from .distribution_plots import (
 from .event_analysis import render_event_drill_down, show_high_anomaly_events
 
 def render_anomaly_scores_dashboard(df_clean, threshold):
-    """
-    Renders the anomaly scores dashboard with various visualizations in a grid layout.
-    
-    Args:
-        df_clean (pd.DataFrame): The cleaned dataframe
-        threshold (float): The anomaly score threshold
-    """
+  
     # Create a flag column based on the threshold
     df_clean["Above Threshold"] = df_clean["Anomaly Scores"] > threshold
     
@@ -108,12 +99,7 @@ def render_anomaly_scores_dashboard(df_clean, threshold):
     render_event_drill_down(high_anomaly)
 
 def render_visualization_section(df_clean):
-    """
-    Renders the interactive visualizations section of the app.
-    
-    Args:
-        df_clean (pd.DataFrame): The cleaned dataframe
-    """
+  
     st.header("Interactive Visualizations")
     
     if "Anomaly Scores" in df_clean.columns:

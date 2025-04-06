@@ -1,7 +1,4 @@
 # components/visualizations/time_series.py
-"""
-Functions for time-based visualizations of security event data.
-"""
 
 import streamlit as st
 import pandas as pd
@@ -10,12 +7,7 @@ import plotly.express as px
 from .utils import apply_dark_theme, map_days_of_week, get_day_order
 
 def render_time_based_visualizations(df_clean):
-    """
-    Renders time-based visualizations if time data is available.
-    
-    Args:
-        df_clean (pd.DataFrame): The cleaned dataframe
-    """
+
     # Process the timestamp column for visualization (use Hour that was already created)
     if "Hour" in df_clean.columns and "Above Threshold" in df_clean.columns:
         # Group by hour and count anomalies above threshold
@@ -57,12 +49,7 @@ def render_time_based_visualizations(df_clean):
         st.error("Could not create time-based visualization. Required data is not available.")
 
 def render_day_of_week_analysis(df_clean):
-    """
-    Renders day of week analysis visualization if day of week data is available.
-    
-    Args:
-        df_clean (pd.DataFrame): The cleaned dataframe
-    """
+
     if "Day_of_Week" in df_clean.columns and "Above Threshold" in df_clean.columns:
         # Map numeric day of week to names
         day_names = map_days_of_week()

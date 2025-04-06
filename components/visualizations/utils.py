@@ -1,21 +1,10 @@
 # components/visualizations/utils.py
-"""
-Utility functions for visualizations.
-"""
 
 import pandas as pd
 import plotly.graph_objects as go
 
 def apply_dark_theme(fig):
-    """
-    Apply dark theme styling to a plotly figure.
-    
-    Args:
-        fig: A plotly figure object
-        
-    Returns:
-        The same figure with dark theme styling applied
-    """
+  
     fig.update_layout(
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
@@ -24,18 +13,7 @@ def apply_dark_theme(fig):
     return fig
 
 def add_threshold_line(fig, threshold, is_vertical=False, annotation_position="right"):
-    """
-    Add a threshold line to a plotly figure.
-    
-    Args:
-        fig: A plotly figure object
-        threshold: The threshold value
-        is_vertical: Whether the line should be vertical (True) or horizontal (False)
-        annotation_position: Position of the annotation ("right", "left", "top", "bottom")
-        
-    Returns:
-        The same figure with a threshold line added
-    """
+  
     if is_vertical:
         fig.add_shape(
             type="line",
@@ -66,12 +44,7 @@ def add_threshold_line(fig, threshold, is_vertical=False, annotation_position="r
     return fig
 
 def map_days_of_week():
-    """
-    Get a mapping of day of week numbers to names.
-    
-    Returns:
-        dict: A mapping of day numbers (0-6) to day names
-    """
+
     return {
         0: "Monday", 
         1: "Tuesday", 
@@ -83,10 +56,5 @@ def map_days_of_week():
     }
 
 def get_day_order():
-    """
-    Get a list of days of the week in order.
-    
-    Returns:
-        list: Days of the week in order
-    """
+ 
     return ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
