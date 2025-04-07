@@ -1,5 +1,5 @@
-# threatsight/utils/grid_visualization.py
-
+# utils/grid_visualization.py
+import streamlit as st
 import base64
 from io import BytesIO
 import streamlit.components.v1 as components
@@ -7,33 +7,33 @@ import pandas as pd
 import os
 
 def create_grid_visualization(figures_data):
-    """
-    Create an interactive grid visualization with expandable components.
-    
-    Parameters:
-    -----------
-    figures_data : dict
-        Dictionary containing the data for the grid visualization
-        Keys: 'feature_importance', 'cv_results', 'confusion_matrix', 'classification_report'
-        Values: dict with 'image' or 'html' and 'title'
-    
-    Returns:
-    --------
-    None
-    """
+
     # Get the current directory to properly locate static files
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.abspath(os.path.join(current_dir, "../.."))
+    script_dir = os.path.dirname(os.path.abspath(__file__))  # utils folder
+    project_root = os.path.dirname(script_dir)  # ThreatSight folder
     
-    # Load CSS from file
-    css_path = os.path.join(project_root, 'static/css/grid_style.css')
-    with open(css_path, 'r') as css_file:
-        css_content = css_file.read()
+    # Load CSS from file with explicit UTF-8 encoding
+    css_path = os.path.join(project_root, 'static', 'css', 'grid_style.css')
     
-    # Load JavaScript from file
-    js_path = os.path.join(project_root, 'static/js/grid_interaction.js')
-    with open(js_path, 'r') as js_file:
-        js_content = js_file.read()
+    # Load JavaScript from file with explicit UTF-8 encoding
+    js_path = os.path.join(project_root, 'static', 'js', 'grid_interaction.js')
+    
+    # Check if files exist and load them with UTF-8 encoding
+    try:
+        with open(css_path, 'r', encoding='utf-8') as css_file:
+            css_content = css_file.read()
+        with open(js_path, 'r', encoding='utf-8') as js_file:
+            js_content = js_file.read()
+    except FileNotFoundError as e:
+        st.error(f"Error loading static files: {e}")
+        st.info(f"Expected path for CSS: {css_path}")
+        st.info(f"Expected path for JS: {js_path}")
+        st.info("Please create the necessary directories and files, or update the paths in grid_visualization.py")
+        return
+    except UnicodeDecodeError as e:
+        st.error(f"Error decoding file: {e}")
+        st.info("Please save your CSS and JS files with UTF-8 encoding")
+        return
     
     # Create HTML structure
     html_content = f"""

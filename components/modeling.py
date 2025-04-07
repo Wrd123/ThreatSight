@@ -140,28 +140,68 @@ def train_and_evaluate_model(df_clean, selected_features, hyperparameters):
     return trained_pipeline, X_train, X_test, y_train, y_test, y_pred, feature_names, {"accuracy": acc, "f1": f1}
 
 def render_evaluation_section(trained_pipeline, X_train, X_test, y_train, y_test, y_pred, feature_names):
-
+    from utils.grid_visualization import create_grid_visualization, figure_to_base64, dataframe_to_html
+    
     st.subheader("Model Evaluation")
     
-    # Cross-Validation Evaluation for Classification
+    # 1. Feature Importance
+    feature_importance_data = {'title': 'Feature Importance'}
+    model_step = trained_pipeline.named_steps.get("model")
+    if model_step is not None and hasattr(model_step, "feature_importances_"):
+        importances = model_step.feature_importances_
+        fig_feat = Visualization.plot_feature_importance(feature_names, importances)
+        fig_feat.set_size_inches(5, 4)
+        feature_importance_data['image'] = figure_to_base64(fig_feat)
+    else:
+        feature_importance_data['html'] = '<p>Feature importances are not available.</p>'
+    
+    # 2. Cross-Validation Results
     cv_results = ModelEvaluation.evaluate_classification(trained_pipeline, X_train, y_train)
-    st.write("Cross-Validation Results:")
-    st.write(cv_results)
     
-    # Plot Confusion Matrix
-    st.subheader("Confusion Matrix")
+    # Format CV results into a cleaner DataFrame for display
+    cv_df = pd.DataFrame({
+        'Metric': ['Accuracy', 'F1 (micro)', 'F1 (macro)', 'Precision', 'Recall'],
+        'Test Score': [
+            round(cv_results['test_accuracy'].mean(), 3),
+            round(cv_results['test_f1_micro'].mean(), 3),
+            round(cv_results['test_f1_macro'].mean(), 3),
+            round(cv_results['test_precision_macro'].mean(), 3),
+            round(cv_results['test_recall_macro'].mean(), 3)
+        ]
+    })
+    
+    cv_data = {
+        'title': 'Cross-Validation Results',
+        'html': dataframe_to_html(cv_df, classes='data-table')
+    }
+    
+    # 3. Confusion Matrix
     fig_cm = ModelEvaluation.plot_confusion_matrix(y_test, y_pred, class_labels=['Low', 'Medium', 'High'])
-    col1, col2, col3 = st.columns([1, 4, 1])
-    with col2:
-        st.pyplot(fig_cm)
+    fig_cm.set_size_inches(5, 4)
+    confusion_matrix_data = {
+        'title': 'Confusion Matrix',
+        'image': figure_to_base64(fig_cm)
+    }
     
-    # Generate and Display Classification Report
-    st.subheader("Classification Report")
+    # 4. Classification Report
     report_df = ModelEvaluation.generate_classification_report(y_test, y_pred, output_csv="test_res.csv")
-    st.dataframe(report_df)
+    classification_report_data = {
+        'title': 'Classification Report',
+        'html': dataframe_to_html(report_df, classes='data-table')
+    }
+    
+    # Prepare all data for the grid
+    figures_data = {
+        'feature_importance': feature_importance_data,
+        'cv_results': cv_data,
+        'confusion_matrix': confusion_matrix_data,
+        'classification_report': classification_report_data
+    }
+    
+    # Create the interactive grid visualization
+    create_grid_visualization(figures_data)
 
 def render_modeling_section(df_clean):
-  
     st.header("Model Interaction and Feedback")
     
     if "Severity Level" not in df_clean.columns:
@@ -189,16 +229,5 @@ def render_modeling_section(df_clean):
         st.write(f"**Model F1 Score:** {metrics['f1']:.2f}")
         st.write("Retraining complete at:", datetime.now())
         
-        # Display feature importance if available
-        model_step = trained_pipeline.named_steps.get("model")
-        if model_step is not None and hasattr(model_step, "feature_importances_"):
-            importances = model_step.feature_importances_
-            # Use the feature names from the function
-            st.subheader("Feature Importance")
-            fig_feat = Visualization.plot_feature_importance(feature_names, importances)
-            st.pyplot(fig_feat)
-        else:
-            st.info("Feature importances are not available for the current model.")
-        
-        # Render evaluation section
+        # Render evaluation section (now includes feature importance)
         render_evaluation_section(trained_pipeline, X_train, X_test, y_train, y_test, y_pred, feature_names)
