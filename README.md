@@ -5,7 +5,7 @@
 Welcome to ThreatSite! Follow these simple steps to execute and use the application effectively.
 
 ### Step 1: Download Data Set
-1. Visit [Kaggle Cyber Security Attacks Dataset](https://www.kaggle.com/datasets/cybersecurity-attacks)
+1. Visit (https://www.kaggle.com/datasets/cybersecurity-attacks)
 2. Click the Download button at the top right corner
 3. Scroll down to "Download dataset as zip" and click it (you may need to log in or create an account)
 4. After downloading, unzip the file and ensure the `cybersecurity_attacks.csv` file is accessible in your desired folder
