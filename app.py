@@ -7,6 +7,7 @@ import pandas as pd
 from components.data_section import render_data_section
 from components.visualizations import render_visualization_section
 from components.modeling import render_modeling_section
+from streamlit import config
 
 # Set Streamlit page configuration
 st.set_page_config(page_title="Cybersecurity Threat Detection Dashboard", layout="wide")

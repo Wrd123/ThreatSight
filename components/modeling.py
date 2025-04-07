@@ -14,12 +14,7 @@ from model_visualization import ModelTraining, Visualization, ModelEvaluation
 from utils.helpers import get_categorical_features, get_numerical_features
 
 def render_hyperparameter_section():
-    """
-    Renders the hyperparameter tuning section and returns the selected hyperparameters.
-    
-    Returns:
-        dict: Dictionary containing the selected hyperparameters
-    """
+   
     st.subheader("Hyperparameter Tuning")
     
     # Add explanation and slider for n_estimators
