@@ -1,4 +1,4 @@
-# ThreatSite: Cybersecurity Threat Detection Dashboard
+# ThreatSight: Cybersecurity Threat Detection Dashboard
 
 ## Quick Start Guide
 
