@@ -1,8 +1,10 @@
 # ThreatSight: Cybersecurity Threat Detection Dashboard
 
-## Quick Start Guide
+ThreatSight is a cybersecurity threat detection dashboard built with Python and Streamlit.  
+It ingests security event data, applies machine learning techniques for anomaly detection,  
+and provides interactive visualizations to explore attack patterns and model results.  
 
-Welcome to ThreatSite! Follow these simple steps to execute and use the application effectively.
+## Quick Start Guide
 
 ### Step 1: Download Data Set
 1. Visit (https://www.kaggle.com/datasets/teamincribo/cyber-security-attacks)
@@ -11,7 +13,7 @@ Welcome to ThreatSite! Follow these simple steps to execute and use the applicat
 4. After downloading, unzip the file and ensure the `cybersecurity_attacks.csv` file is accessible in your desired folder
 
 ### Step 2: Run Application
-1. Go to the ThreatSite Dashboard (https://threatsight.streamlit.app)
+1. Go to the ThreatSight Dashboard (https://threatsight.streamlit.app)
 2. Once the webpage loads, click the "Browse Files" button on the right side of the screen
 3. Locate and upload the previously downloaded `cybersecurity_attacks.csv` file
 
@@ -45,8 +47,19 @@ The Kaggle Cyber Security Attacks dataset contains synthesized cybersecurity eve
 - Severity levels
 - Temporal data
 
+  ## Tech Stack  
+- **Language:** Python  
+- **Framework:** Streamlit  
+- **Libraries:** Pandas, Scikit-learn, Matplotlib, Seaborn  
+- **Concepts:** Cybersecurity, Anomaly Detection, RandomForest, Data Visualization  
+
+
 ## Features
 - Data Ingestion and Processing: Clean and transform raw security data
 - Interactive Visualizations: Dynamic, adjustable visualizations for pattern recognition
 - Model Interaction: Train and evaluate machine learning models with customizable parameters
 - Drill-Down Analysis: Detailed examination of individual security events
+
+## Purpose  
+This project was developed to strengthen my knowledge of **cybersecurity, anomaly detection,  
+and applied machine learning**, with the goal of creating tools that support real-world defense applications.  
